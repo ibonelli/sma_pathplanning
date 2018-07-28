@@ -21,12 +21,12 @@ show_animation = True
 def main():
     print(__file__ + " start!!")
     # initial state [x, y]
-    x = np.array([10, 10])
+    x = np.array([5, 5])
     # goal position [x, y]
     goal = np.array([50, 50])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("myworld.csv")
+    ob = np.loadtxt("world01.csv")
 
     traj = np.array(x)
     ticks = 0
@@ -50,7 +50,11 @@ def main():
             plt.plot(goal[0], goal[1], "xb")
             # ob[:, 0] -> The full first row of the array (all X numbers)
             # ob[:, 1] -> The full second row of the array (all Y numbers)
-            plt.plot(ob[:, 0], ob[:, 1], "ok")
+            #plt.plot(ob[:, 0], ob[:, 1], "ok")
+            for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
+                patch=plt.Circle((obx, oby), obs, color='black', fill=True)
+                tmp=plt.gca()
+                tmp.add_patch(patch)
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.0001)

@@ -1,0 +1,8 @@
+Release history
+
+v0.01
+    From priorly built versions, created the first version I can fuse with other agents
+v0.02
+    Moved the current random agent to a class. I need to be able to use more than one agent and this is much cleaner.
+v0.03
+    New type of world, still using the random agent. This run shows that current obstacle detection has a bug.
