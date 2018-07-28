@@ -6,3 +6,5 @@ v0.02
     Moved the current random agent to a class. I need to be able to use more than one agent and this is much cleaner.
 v0.03
     New type of world, still using the random agent. This run shows that current obstacle detection has a bug.
+v0.04
+    Current version of the TangentBug moving into a new world and being a class too.
