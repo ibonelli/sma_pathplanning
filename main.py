@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 	# https://matplotlib.org/users/pyplot_tutorial.html
 
 # Modules
-from agent_random import rAgent
+from agent_tangent_bug import atan1Agent
 
 # Globals
 show_animation = True
@@ -31,17 +31,14 @@ def main():
     traj = np.array(x)
     ticks = 0
 
-    ra = rAgent()
+    atan1 = atan1Agent()
 
-    for i in range(1000):
-        if (ticks == 0):
-            ang, vel, ticks = ra.random_control()
-        else:
-            ticks-=1
-
-        x,col = ra.motion(x, ob, ang, vel)
-        if (col):
-            ticks = 0
+    for i in range(40):
+        limit = atan1.lidar(x, ob)
+        #graph_lidar(x, goal, limit, ob, i)
+        ang, vel, ticks = atan1.tangentbug_control(x, ob, goal, limit)
+        x,col = atan1.motion(x, ob, ang, vel)
+        print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
         traj = np.vstack((traj, x))  # store state history
 
         if show_animation:
@@ -60,7 +57,7 @@ def main():
             plt.pause(0.0001)
 
         # check goal
-        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= ra.robot_radius:
+        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= atan1.robot_radius:
             print("Goal!!")
             break
 
