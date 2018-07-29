@@ -26,3 +26,7 @@ v0.09
     First APF did not pan out at all. Had a different world approach which I could not factor in quickly enough.
     Second one (Dynamic Window Approach) was quite simple to adapt to current way.
     Worked well for a world1, but since it uses single point obstacles it goes through walls on world2.
+v0.10
+    Run DWA in different worlds, and created a new world to test it a bit further
+v0.11
+    Added two agents into the same world: Random & DWA
