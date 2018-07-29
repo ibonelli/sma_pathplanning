@@ -125,7 +125,7 @@ class atan1Agent():
         elif (len(oi) == 1):
             return True, oi[0]
         else:
-            min_val = 99999999
+            min_val = 99999999 # Try float("inf")
             val_to_return = None
             for p in oi:
                 h = np.linalg.norm(p)
