@@ -26,14 +26,14 @@ def main():
     goal = np.array([50, 50])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world01.csv")
+    ob = np.loadtxt("world02.csv")
 
     traj = np.array(x)
     ticks = 0
 
     atan1 = atan1Agent()
 
-    for i in range(10):
+    for i in range(50):
         limit = atan1.lidar(x, ob)
         #graph_lidar(x, goal, limit, ob, i)
         ang, vel, ticks = atan1.tangentbug_control(x, ob, goal, limit)

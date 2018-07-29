@@ -49,7 +49,7 @@ class atan1Agent():
         self.robot_radius = 1.0  # [m]
         self.sensor_radius = 10  # [m]
         self.sensor_angle_steps = 36  # [rad]
-        self.lidar_object_limit = 5
+        self.lidar_object_limit = 4
         self.imagefile = 1
 
     # We get the limit for each LIDAR point
@@ -127,12 +127,9 @@ class atan1Agent():
         else:
             min_val = 99999999
             val_to_return = None
-            #print "Searching for limit -------------------"
-            #print "oi: " + str(oi)
             for p in oi:
                 h = np.linalg.norm(p)
                 if (h < min_val):
-                    #print "min so far: " + str(p)
                     min_val = h
                     val_to_return = p
             return True, p
@@ -233,13 +230,8 @@ class atan1Agent():
     # We save a limit from it's angle
     def save_limit(self, x, goal, ang, ob):
         dst_x = math.cos(ang) * self.sensor_radius + x[0]
-        print "x :" + str(x)
-        print "ang :" + str(ang)
-        print "dst_x :" + str(dst_x)
         dst_y = math.sin(ang) * self.sensor_radius + x[1]
-        print "dst_y :" + str(dst_y)
         intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
-        print "p :" + str(p)
         l = LidarLimits()
         l.angle = ang
         l.oi[0] = p[0]
