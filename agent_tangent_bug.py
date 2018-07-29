@@ -3,18 +3,6 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-class LidarLimits:
-    def __init__(self):
-        self.angle = 0
-        self.oi = np.zeros(2)
-        self.dist = 0
-
-    def print_values(self):
-        print "angle: " + str(self.angle)
-        print "oi: " + str(self.oi)
-        print "dist: " + str(self.dist)
-
-
 class LidarPoint:
     def __init__(self):
         self.angle = 0
@@ -24,10 +12,9 @@ class LidarPoint:
 
     def print_values(self):
         print "angle: " + str(self.angle)
-        print "oi: " + str(self.oi)
+        print "oi: " + str(self.r)
         print "dist: " + str(self.dist)
         print "collision: " + str(self.col)
-
 
 class atan1Agent():
     # simulation parameters
@@ -232,12 +219,13 @@ class atan1Agent():
         dst_x = math.cos(ang) * self.sensor_radius + x[0]
         dst_y = math.sin(ang) * self.sensor_radius + x[1]
         intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
-        l = LidarLimits()
+        l = LidarPoint()
+        l.col = intersects
         l.angle = ang
-        l.oi[0] = p[0]
-        l.oi[1] = p[1]
-        path1 = math.sqrt((x[0] - l.oi[0])**2 + (x[1] - l.oi[1])**2)
-        path2 = math.sqrt((l.oi[0] - goal[0])**2 + (l.oi[1] - goal[1])**2)
+        l.r[0] = p[0]
+        l.r[1] = p[1]
+        path1 = math.sqrt((x[0] - l.r[0])**2 + (x[1] - l.r[1])**2)
+        path2 = math.sqrt((l.r[0] - goal[0])**2 + (l.r[1] - goal[1])**2)
         l.dist = path1 + path2
         return l
 
@@ -255,7 +243,7 @@ class atan1Agent():
         selected = oi_list[0]
 
         for oi in oi_list:
-            if (oi.dist < selected.dist):
+            if (oi.dist < selected.dist and oi.col == False):
                 selected = oi
 
         return selected
@@ -311,7 +299,7 @@ class atan1Agent():
             plt.plot(l.r[0], l.r[1], "b.")
         if (len(oi_list) >= 1):
             for l in oi_list:
-                plt.plot(l.oi[0], l.oi[1], "xr")
+                plt.plot(l.r[0], l.r[1], "xr")
         plt.axis("equal")
         plt.grid(True)
         plt.savefig("/home/ignacio/Downloads/PyPlot/limit_" + filenumber + ".png")
