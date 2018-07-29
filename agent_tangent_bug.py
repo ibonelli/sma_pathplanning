@@ -47,7 +47,7 @@ class atan1Agent():
         self.to_goal_cost_gain = 1.0
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
-        self.sensor_radius = 6  # [m]
+        self.sensor_radius = 10  # [m]
         self.sensor_angle_steps = 36  # [rad]
         self.lidar_object_limit = 3
         self.imagefile = 1
@@ -91,21 +91,20 @@ class atan1Agent():
 
         for i in xrange(steps_to_do):
             for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
-                # TODO - Is obstacle in path?
-                # Need to use : https://martin-thoma.com/how-to-check-if-a-point-is-inside-a-rectangle/
-                # For rectangle we use: x, ob & r_rect = obs+self.robot_radius
-                xloc = x[0] + stepx * i
-                yloc = x[1] + stepy * i
-                dx = xloc - obx
-                dy = yloc - oby
-                dist = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-                if (dist < self.lidar_object_limit):
-                    if (dist < smallest):
-                        collision = True
-                        dx = x[0] - obx
-                        dy = x[1] - oby
-                        smallest = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-                        r = np.array([obx, oby])
+                gpl = self.getPathLimits(x,r,ang)
+                if(self.isPinRectangle(gpl,np.array([obx, oby]))):
+                    xloc = x[0] + stepx * i
+                    yloc = x[1] + stepy * i
+                    dx = xloc - obx
+                    dy = yloc - oby
+                    dist = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
+                    if (dist < self.lidar_object_limit):
+                        if (dist < smallest):
+                            collision = True
+                            dx = x[0] - obx
+                            dy = x[1] - oby
+                            smallest = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
+                            r = np.array([obx, oby])
 
         if (not collision):
             smallest = self.sensor_radius
@@ -144,6 +143,45 @@ class atan1Agent():
                     return r,collision
 
         return r,collision
+
+    # Check if an object is on the robot's path
+    # Using scalar product, see:
+    #     <Dropbox>/Maestria/TFE/Collision_Detection.txt
+    #     <Dropbox>/Maestria/TFE/PathPlanning/P_is_rectangle*.py
+    def isPinRectangle(self, r, P):
+        C = np.array(r[0][0], r[0][1])
+        v = np.array([P[0] - r[0][0], P[1] - r[0][1]])
+        v1 = np.array([r[1][0] - r[0][0], r[1][1] - r[0][1]])
+        v2 = np.array([r[3][0] - r[0][0], r[3][1] - r[0][1]])
+
+        check1 = np.dot(v,v1)
+        v1_lim = np.dot(v1,v1)
+        check2 = np.dot(v,v2)
+        v2_lim = np.dot(v2,v2)
+        ok1 = False
+        ok2 = False
+
+        if(0 <= check1 and check1 <= v1_lim):
+            ok1 = True
+        if(0 <= check2 and check2 <= v2_lim):
+            ok2 = True
+
+        if(ok1 and ok2):
+            return True
+        else:
+            return False
+
+    def getPathLimits(self, org, dst, ang):
+        r = np.zeros(shape=(4,2))
+        r_sin = self.robot_radius * math.sin(ang)
+        r_cos = self.robot_radius * math.cos(ang)
+        r[0] = [org[0] + r_cos, org[1] - r_sin]
+        r[1] = [org[0] - r_cos, org[1] + r_sin]
+        dx = dst[0]
+        dy = dst[1]
+        r[2] = [dx + r_cos, dy - r_sin]
+        r[3] = [dx - r_cos, dy + r_sin]
+        return r
 
     def motion(self, x, ob, ang, vel):
         x_dir = math.cos(ang)
