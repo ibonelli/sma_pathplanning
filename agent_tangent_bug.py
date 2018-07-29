@@ -127,9 +127,12 @@ class atan1Agent():
         else:
             min_val = 99999999
             val_to_return = None
+            #print "Searching for limit -------------------"
+            #print "oi: " + str(oi)
             for p in oi:
                 h = np.linalg.norm(p)
                 if (h < min_val):
+                    #print "min so far: " + str(p)
                     min_val = h
                     val_to_return = p
             return True, p
@@ -229,15 +232,18 @@ class atan1Agent():
 
     # We save a limit from it's angle
     def save_limit(self, x, goal, ang, ob):
-        dst_x = math.cos(ang) * self.sensor_radius
-        dst_y = math.sin(ang) * self.sensor_radius
-        #intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
+        dst_x = math.cos(ang) * self.sensor_radius + x[0]
+        print "x :" + str(x)
+        print "ang :" + str(ang)
+        print "dst_x :" + str(dst_x)
+        dst_y = math.sin(ang) * self.sensor_radius + x[1]
+        print "dst_y :" + str(dst_y)
+        intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
+        print "p :" + str(p)
         l = LidarLimits()
         l.angle = ang
-        #l.oi[0] = p[0] + x[0]
-        #l.oi[1] = p[1] + x[1]
-        l.oi[0] = x[0] + dst_x
-        l.oi[1] = x[1] + dst_y
+        l.oi[0] = p[0]
+        l.oi[1] = p[1]
         path1 = math.sqrt((x[0] - l.oi[0])**2 + (x[1] - l.oi[1])**2)
         path2 = math.sqrt((l.oi[0] - goal[0])**2 + (l.oi[1] - goal[1])**2)
         l.dist = path1 + path2
@@ -269,10 +275,6 @@ class atan1Agent():
         #         https://www.cs.cmu.edu/~motionplanning/student_gallery/2006/st/hw2pub.htm
         oi_list = self.get_limits(x, goal, limit, ob)
         self.print_oi_list(oi_list)
-
-        p = LidarPoint()
-        ang = math.atan2(goal[1]-x[1],goal[0]-x[0])
-        p.col,p.r = self.lidar_limits(x, goal, ob)
 
         if (len(oi_list) == 0):
             # No collission in sight, we can move directly to target

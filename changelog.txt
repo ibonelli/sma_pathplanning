@@ -17,3 +17,7 @@ v0.06
 v0.07
     Works better for world2 after tweaking the lidar_object_limit.
     Still having problems detecting proper direction for world1.
+v0.08
+    Found a nasty bug which prevented proper limit calculation.
+    Still have issues finding out best possible path.
+    Quite obvious with world1 and at the begging of world2.

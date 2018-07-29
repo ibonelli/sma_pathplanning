@@ -33,7 +33,7 @@ def main():
 
     atan1 = atan1Agent()
 
-    for i in range(15):
+    for i in range(10):
         limit = atan1.lidar(x, ob)
         #graph_lidar(x, goal, limit, ob, i)
         ang, vel, ticks = atan1.tangentbug_control(x, ob, goal, limit)
