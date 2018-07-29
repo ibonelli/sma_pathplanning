@@ -13,52 +13,45 @@ import matplotlib.pyplot as plt
 	# https://matplotlib.org/users/pyplot_tutorial.html
 
 # Modules
-from agent_tangent_bug import atan1Agent
+from agent_dwa import dwaAgent
 
 # Globals
 show_animation = True
 
 def main():
     print(__file__ + " start!!")
-    # initial state [x, y]
-    x = np.array([5, 5])
+    # initial state [x, y, yaw(rad), v(m/s), omega(rad/s)]
+    x = np.array([5, 5, math.pi / 8.0, 0.0, 0.0])
     # goal position [x, y]
     goal = np.array([50, 50])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world02.csv")
+    ob = np.loadtxt("world01.csv")
 
     traj = np.array(x)
     ticks = 0
 
-    atan1 = atan1Agent()
+    u = np.array([0.0, 0.0])
+    dwa = dwaAgent()
 
-    for i in range(50):
-        limit = atan1.lidar(x, ob)
-        #graph_lidar(x, goal, limit, ob, i)
-        ang, vel, ticks = atan1.tangentbug_control(x, ob, goal, limit)
-        x,col = atan1.motion(x, ob, ang, vel)
-        print "======================================================================="
-        print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
+    for i in range(1000):
+        u, ltraj = dwa.dwa_control(x, u, goal, np.array([ob[:, 0], ob[:, 1]]))
+        x = dwa.motion(x, u)
         traj = np.vstack((traj, x))  # store state history
 
         if show_animation:
             plt.cla()
+            plt.plot(ltraj[:, 0], ltraj[:, 1], "-g")
             plt.plot(x[0], x[1], "xr")
             plt.plot(goal[0], goal[1], "xb")
-            # ob[:, 0] -> The full first row of the array (all X numbers)
-            # ob[:, 1] -> The full second row of the array (all Y numbers)
-            #plt.plot(ob[:, 0], ob[:, 1], "ok")
-            for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
-                patch=plt.Circle((obx, oby), obs, color='black', fill=True)
-                tmp=plt.gca()
-                tmp.add_patch(patch)
+            plt.plot(ob[:, 0], ob[:, 1], "ok")
+            dwa.plot_arrow(x[0], x[1], x[2])
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.0001)
 
         # check goal
-        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= atan1.robot_radius:
+        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= dwa.robot_radius:
             print("Goal!!")
             break
 
