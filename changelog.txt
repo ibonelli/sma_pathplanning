@@ -12,3 +12,5 @@ v0.05
     The attempt to detect if object is in path did not work as expected.
     New approach using segment to circle intersection to detect lidar limits.
     Detection seems to work better, but I still have problems finding right path.
+v0.06
+    Better detection of best path. But need to find better 3rd option and avoid random.
