@@ -117,10 +117,11 @@ class atan1Agent():
         for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
             intersects, limit = self.detect_collision_point(x, r, np.array([obx, oby]), obs)
             if (intersects):
+                #print "Intersection at " + str(limit)
                 oi.append(limit)
-        if (not intersects):
+        if (len(oi) == 0):
             return intersects, r
-        if (len(oi) == 1):
+        elif (len(oi) == 1):
             return intersects, oi[0]
         else:
             min_val = 99999999
