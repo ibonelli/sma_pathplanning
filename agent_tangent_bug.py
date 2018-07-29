@@ -166,45 +166,6 @@ class atan1Agent():
 
         return r,collision
 
-    # Check if an object is on the robot's path
-    # Using scalar product, see:
-    #     <Dropbox>/Maestria/TFE/Collision_Detection.txt
-    #     <Dropbox>/Maestria/TFE/PathPlanning/P_is_rectangle*.py
-    def isPinRectangle(self, r, P):
-        C = np.array(r[0][0], r[0][1])
-        v = np.array([P[0] - r[0][0], P[1] - r[0][1]])
-        v1 = np.array([r[1][0] - r[0][0], r[1][1] - r[0][1]])
-        v2 = np.array([r[3][0] - r[0][0], r[3][1] - r[0][1]])
-
-        check1 = np.dot(v,v1)
-        v1_lim = np.dot(v1,v1)
-        check2 = np.dot(v,v2)
-        v2_lim = np.dot(v2,v2)
-        ok1 = False
-        ok2 = False
-
-        if(0 <= check1 and check1 <= v1_lim):
-            ok1 = True
-        if(0 <= check2 and check2 <= v2_lim):
-            ok2 = True
-
-        if(ok1 and ok2):
-            return True
-        else:
-            return False
-
-    def getPathLimits(self, org, dst, ang):
-        r = np.zeros(shape=(4,2))
-        r_sin = self.robot_radius * math.sin(ang)
-        r_cos = self.robot_radius * math.cos(ang)
-        r[0] = [org[0] + r_cos, org[1] - r_sin]
-        r[1] = [org[0] - r_cos, org[1] + r_sin]
-        dx = dst[0]
-        dy = dst[1]
-        r[2] = [dx + r_cos, dy - r_sin]
-        r[3] = [dx - r_cos, dy + r_sin]
-        return r
-
     def motion(self, x, ob, ang, vel):
         x_dir = math.cos(ang)
         y_dir = math.sin(ang)
@@ -216,42 +177,38 @@ class atan1Agent():
 
         return r,col
 
-    # Initially followed description on http://www.cs.bilkent.edu.tr/~culha/cs548/hw1/
-    #        @ "2.1. Motion to Goal Behaviour" we get o1 & o2
-    # But that's a simplistic approach, we have many oi
-    # I'll use the simplest differential/borders algorithm to identify the oi list
+    # From the LIDAR list we get best possible paths
     def get_limits(self, x, goal, limit):
         oi_list = []
-        di_list = []
 
         angle_step = 2 * math.pi / self.sensor_angle_steps
         last = self.sensor_angle_steps - 1
+        path_clear = False
 
-        follow = False
-        add_to_list = False
         for i in range(self.sensor_angle_steps):
-            if (limit[i].dist == self.sensor_radius and follow == False):
-                follow = True
-                add_to_list = True
+            if (limit[i].dist >= self.lidar_object_limit and path_clear == False):
+                cant = 1
+                ang_ini = angle_step * i
+                path_clear = True
+            if (limit[i].dist >= self.lidar_object_limit and path_clear == True):
+                cant += 1
+                path_clear = True
+            if (limit[i].dist <= self.lidar_object_limit and path_clear == True):
+                ang_fin = angle_step * i
+                path_clear = False
                 l = LidarLimits()
-                l.oi[0] = limit[i].r[0]
-                l.oi[1] = limit[i].r[1]
-            elif (limit[i].dist != self.sensor_radius and follow == True):
-                follow = False
-                add_to_list = True
-                l = LidarLimits()
-                l.oi[0] = limit[i-1].r[0]
-                l.oi[1] = limit[i-1].r[1]
-            # Only one place to add to list
-            if (add_to_list == True):
-                add_to_list = False
-                l.angle = angle_step * i
+                l.angle = (ang_ini+ang_fin)/2
+                dst_x = math.cos(l.angle) * self.sensor_radius
+                dst_y = math.sin(l.angle) * self.sensor_radius
+                intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
+                l.oi[0] = p[0]
+                l.oi[1] = p[1]
                 path1 = math.sqrt((x[0] - l.oi[0])**2 + (x[1] - l.oi[1])**2)
                 path2 = math.sqrt((l.oi[0] - goal[0])**2 + (l.oi[1] - goal[1])**2)
                 l.dist = path1 + path2
                 oi_list.append(l)
 
-        self.graph_limits(limit, di_list, oi_list)
+        self.graph_limits(limit, oi_list)
         return oi_list
 
     def print_oi_list(self, oi_list):
@@ -319,7 +276,7 @@ class atan1Agent():
         filenumber = format(frame, '05d')
         plt.savefig("/home/ignacio/Downloads/PyPlot/tangentbug_" + filenumber + ".png")
 
-    def graph_limits(self, limit, di_limit, oi_list):
+    def graph_limits(self, limit, oi_list):
         filenumber = format(self.imagefile, '05d')
         self.imagefile += 1
 
@@ -333,16 +290,6 @@ class atan1Agent():
         plt.axis("equal")
         plt.grid(True)
         plt.savefig("/home/ignacio/Downloads/PyPlot/limit_" + filenumber + ".png")
-
-    def graph_di_list(limit_list,file_name,file_number):
-        plt.cla()
-        i=0
-        for l in limit_list:
-            plt.plot(i, l, 'b-')
-            i+=1
-        plt.grid(True)
-        file_number_to_use = format(file_number, '05d')
-        plt.savefig("/home/ignacio/Downloads/PyPlot/limit_" + file_name + "_" + file_number_to_use + ".png")
 
     def graph_limit_list(limit_list,file_name,file_number):
         plt.cla()
