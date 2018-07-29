@@ -23,7 +23,7 @@ def main():
     # initial state [x, y]
     x = np.array([5, 5])
     # goal position [x, y]
-    goal = np.array([50, 50])
+    goal = np.array([30, 30])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
     ob = np.loadtxt("world01.csv")
