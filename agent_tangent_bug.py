@@ -66,6 +66,7 @@ class atan1Agent():
             ry = x[1] + self.sensor_radius * math.sin(angle_step * i)
             r = np.array([rx, ry])
             p.col,p.r = self.lidar_limits(x, r, ob)
+            p.dist = math.sqrt(math.pow(p.r[0]-x[0],2)+math.pow(p.r[1]-x[1],2))
 
             limit.append(p)
 
@@ -120,9 +121,9 @@ class atan1Agent():
                 #print "Intersection at " + str(limit)
                 oi.append(limit)
         if (len(oi) == 0):
-            return intersects, r
+            return False, r
         elif (len(oi) == 1):
-            return intersects, oi[0]
+            return True, oi[0]
         else:
             min_val = 99999999
             val_to_return = None
@@ -131,7 +132,7 @@ class atan1Agent():
                 if (h < min_val):
                     min_val = h
                     val_to_return = p
-            return intersects, p
+            return True, p
 
     # Obstacle detection for the robot
     # Same algorithm used by random movement agent
@@ -178,23 +179,27 @@ class atan1Agent():
         return r,col
 
     # From the LIDAR list we get best possible paths
-    def get_limits(self, x, goal, limit):
+    def get_limits(self, x, goal, limit, ob):
         oi_list = []
 
+        print "oi calculation --------------------"
         angle_step = 2 * math.pi / self.sensor_angle_steps
         last = self.sensor_angle_steps - 1
         path_clear = False
 
         for i in range(self.sensor_angle_steps):
+            print "Limit for: " + str(limit[i].dist)
             if (limit[i].dist >= self.lidar_object_limit and path_clear == False):
                 cant = 1
                 ang_ini = angle_step * i
                 path_clear = True
+                print "Found ini_ang: " + str(ang_ini)
             if (limit[i].dist >= self.lidar_object_limit and path_clear == True):
                 cant += 1
                 path_clear = True
             if (limit[i].dist <= self.lidar_object_limit and path_clear == True):
                 ang_fin = angle_step * i
+                print "Found fin_ang: " + str(ang_fin)
                 path_clear = False
                 l = LidarLimits()
                 l.angle = (ang_ini+ang_fin)/2
@@ -206,6 +211,7 @@ class atan1Agent():
                 path1 = math.sqrt((x[0] - l.oi[0])**2 + (x[1] - l.oi[1])**2)
                 path2 = math.sqrt((l.oi[0] - goal[0])**2 + (l.oi[1] - goal[1])**2)
                 l.dist = path1 + path2
+                l.print_values()
                 oi_list.append(l)
 
         self.graph_limits(limit, oi_list)
@@ -235,7 +241,7 @@ class atan1Agent():
         #         http://www.cs.bilkent.edu.tr/~culha/cs548/hw1/
         # And with some graphical aid from:
         #         https://www.cs.cmu.edu/~motionplanning/student_gallery/2006/st/hw2pub.htm
-        oi_list = self.get_limits(x, goal, limit)
+        oi_list = self.get_limits(x, goal, limit, ob)
         self.print_oi_list(oi_list)
 
         p = LidarPoint()

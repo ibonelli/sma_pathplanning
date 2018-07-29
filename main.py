@@ -26,7 +26,7 @@ def main():
     goal = np.array([50, 50])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world02.csv")
+    ob = np.loadtxt("world01.csv")
 
     traj = np.array(x)
     ticks = 0
