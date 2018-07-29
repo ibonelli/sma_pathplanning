@@ -14,3 +14,6 @@ v0.05
     Detection seems to work better, but I still have problems finding right path.
 v0.06
     Better detection of best path. But need to find better 3rd option and avoid random.
+v0.07
+    Works better for world2 after tweaking the lidar_object_limit.
+    Still having problems detecting proper direction for world1.
