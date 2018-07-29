@@ -21,12 +21,12 @@ show_animation = True
 def main():
     print(__file__ + " start!!")
     # initial state [x, y, yaw(rad), v(m/s), omega(rad/s)]
-    x = np.array([5, 5, math.pi / 8.0, 0.0, 0.0])
+    x = np.array([10, 10, math.pi / 8.0, 0.0, 0.0])
     # goal position [x, y]
     goal = np.array([50, 50])
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world02.csv")
+    ob = np.loadtxt("world03.csv")
 
     traj = np.array(x)
     ticks = 0
@@ -35,8 +35,9 @@ def main():
     dwa = dwaAgent()
 
     for i in range(1000):
-        u, ltraj = dwa.dwa_control(x, u, goal, np.array([ob[:, 0], ob[:, 1]]))
+        u, ltraj = dwa.dwa_control(x, u, goal, ob)
         x = dwa.motion(x, u)
+        print "Pos " + str(i) + " - x: " + str(x)
         traj = np.vstack((traj, x))  # store state history
 
         if show_animation:
@@ -44,7 +45,13 @@ def main():
             plt.plot(ltraj[:, 0], ltraj[:, 1], "-g")
             plt.plot(x[0], x[1], "xr")
             plt.plot(goal[0], goal[1], "xb")
-            plt.plot(ob[:, 0], ob[:, 1], "ok")
+            # ob[:, 0] -> The full first row of the array (all X numbers)
+            # ob[:, 1] -> The full second row of the array (all Y numbers)
+            #plt.plot(ob[:, 0], ob[:, 1], "ok")
+            for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
+                patch=plt.Circle((obx, oby), obs, color='black', fill=True)
+                tmp=plt.gca()
+                tmp.add_patch(patch)
             dwa.plot_arrow(x[0], x[1], x[2])
             plt.axis("equal")
             plt.grid(True)

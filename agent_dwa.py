@@ -105,7 +105,7 @@ class dwaAgent():
                 dx = traj[ii, 0] - ox
                 dy = traj[ii, 1] - oy
 
-                r = math.sqrt(dx**2 + dy**2)
+                r = math.sqrt(dx**2 + dy**2) - ob[i, 2]
                 if r <= self.robot_radius:
                     # https://stackoverflow.com/questions/34264710/what-is-the-point-of-floatinf-in-python
                     return float("Inf")  # collission
