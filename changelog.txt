@@ -8,3 +8,6 @@ v0.03
     New type of world, still using the random agent. This run shows that current obstacle detection has a bug.
 v0.04
     Current version of the TangentBug moving into a new world and being a class too.
+v0.05
+    The attempt to detect if object is in path did not work as expected.
+    New approach using segment to circle intersection to detect lidar limits.

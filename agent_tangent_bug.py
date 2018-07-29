@@ -65,51 +65,72 @@ class atan1Agent():
             rx = x[0] + self.sensor_radius * math.cos(angle_step * i)
             ry = x[1] + self.sensor_radius * math.sin(angle_step * i)
             r = np.array([rx, ry])
-            p.r,p.dist,p.col = self.lidar_limits(x, r, p.ang, ob)
+            p.col,p.r = self.lidar_limits(x, r, ob)
 
             limit.append(p)
 
         return limit
 
+    def getSegmentCircleIntersection(self, p1, p2, q, r):
+        v = np.array([p2[0]-p1[0], p2[1]-p1[1]])
+        a = v.dot(v)
+        b = 2 * v.dot(np.array([p1[0]-q[0], p1[1]-q[1]]))
+        c = p1.dot(p1) + q.dot(q) - 2 * p1.dot(q) - r**2
+        disc = b**2 - 4 * a * c
+        if disc < 0:
+            return False, None
+        sqrt_disc = math.sqrt(disc)
+        t1 = (-b + sqrt_disc) / (2 * a)
+        t2 = (-b - sqrt_disc) / (2 * a)
+
+        if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
+            return False, None
+        else:
+            i = []
+            if (0 <= t1 <= 1):
+                i1 = v.dot(t1) + p1
+                i.append(i1)
+            if (0 <= t2 <= 1):
+                i2 = v.dot(t2) + p1
+                i.append(i2)
+            return True, i
+
+    def detect_collision_point(self, p1, p2, q, r):
+        intersects, values = self.getSegmentCircleIntersection(p1,p2,q,r)
+        if (intersects):
+            if (len(values) == 1):
+                return intersects, values[0]
+            else:
+                m1 = np.linalg.norm(values[0])
+                m2 = np.linalg.norm(values[1])
+                if(m1>m2):
+                    return intersects, values[1]
+                else:
+                    return intersects, values[0]
+        else:
+            return intersects, None
+
     # We get the limit for an specific angle.
     # Almost the same as the obstacle_detection()
-    def lidar_limits(self, x, r, ang, ob):
-        # step will be the 99% of the diameter of the robot
-        step = 2 * self.robot_radius * 0.99
-
-        dx = x[0] - r[0]
-        dy = x[1] - r[1]
-        distance = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-
-        steps_to_do = int(math.ceil(distance/step))
-        step = distance / steps_to_do
-        stepx = math.cos(ang) * step
-        stepy = math.sin(ang) * step
-
-        collision = False
-        smallest = 9999999
-
-        for i in xrange(steps_to_do):
-            for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
-                gpl = self.getPathLimits(x,r,ang)
-                if(self.isPinRectangle(gpl,np.array([obx, oby]))):
-                    xloc = x[0] + stepx * i
-                    yloc = x[1] + stepy * i
-                    dx = xloc - obx
-                    dy = yloc - oby
-                    dist = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-                    if (dist < self.lidar_object_limit):
-                        if (dist < smallest):
-                            collision = True
-                            dx = x[0] - obx
-                            dy = x[1] - oby
-                            smallest = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-                            r = np.array([obx, oby])
-
-        if (not collision):
-            smallest = self.sensor_radius
-
-        return r,smallest,collision
+    def lidar_limits(self, x, r, ob):
+        oi = []
+        for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
+            intersects, limit = self.detect_collision_point(x, r, np.array([obx, oby]), obs)
+            if (intersects):
+                oi.append(limit)
+        if (not intersects):
+            return intersects, r
+        if (len(oi) == 1):
+            return intersects, oi[0]
+        else:
+            min_val = 99999999
+            val_to_return = None
+            for p in oi:
+                h = np.linalg.norm(p)
+                if (h < min_val):
+                    min_val = h
+                    val_to_return = p
+            return intersects, p
 
     # Obstacle detection for the robot
     # Same algorithm used by random movement agent
@@ -261,7 +282,7 @@ class atan1Agent():
 
         p = LidarPoint()
         ang = math.atan2(goal[1]-x[1],goal[0]-x[0])
-        p.r,p.dist,p.col = self.lidar_limits(x, goal, ang, ob)
+        p.col,p.r = self.lidar_limits(x, goal, ob)
 
         if (not p.col):
             # No collission in sight, we can move directly to target
