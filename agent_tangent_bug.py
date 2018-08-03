@@ -48,7 +48,7 @@ class atan1Agent():
 
         for i in xrange(self.sensor_angle_steps):
             p = LidarPoint()
-            p.ang = angle_step * i
+            p.angle = angle_step * i
             rx = x[0] + self.sensor_radius * math.cos(angle_step * i)
             ry = x[1] + self.sensor_radius * math.sin(angle_step * i)
             r = np.array([rx, ry])
