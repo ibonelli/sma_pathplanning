@@ -59,7 +59,7 @@ def main():
     r1 = rAgent()
     r2 = rAgent()
 
-    for i in range(1000):
+    for i in range(10):
         # Random1 - Calculating trajectory
         if (r1_ticks == 0):
             r1_ang, r1_vel, r1_ticks = r1.random_control()

@@ -169,65 +169,12 @@ class atan1Agent():
     def get_limits(self, x, goal, limit, ob):
         oi_list = []
 
-        angle_step = 2 * math.pi / self.sensor_angle_steps
-        last = self.sensor_angle_steps - 1
-        path_clear = False
-
-        for i in range(self.sensor_angle_steps):
-            if (limit[i].dist >= self.lidar_object_limit and path_clear == False):
-                cant = 1
-                ang_ini = angle_step * i
-                path_clear = True
-            if (limit[i].dist >= self.lidar_object_limit and path_clear == True):
-                cant += 1
-                path_clear = True
-            if (limit[i].dist <= self.lidar_object_limit and path_clear == True):
-                ang_fin = angle_step * i
-                path_clear = False
-                # Less than 30 degree aperture:
-                #   => We stablish as trajectory center point
-                if ((ang_fin-ang_ini) < (math.pi/6)):
-                    cent_ang = (ang_ini+ang_fin)/2
-                    print "Ang < 30 : " + str(cent_ang)
-                    l = self.save_limit(x, goal, cent_ang, ob)
-                    oi_list.append(l)
-                # More than 120 degree aperture:
-                #   => We stablish as trajectory tangent points
-                elif ((ang_fin-ang_ini) > (4*math.pi/6)):
-                    cent_ang = (ang_ini+ang_fin)/2
-                    print "Ang > 120 : " + str(cent_ang)
-                    p_ang1 = cent_ang + math.pi/2
-                    l = self.save_limit(x, goal, p_ang1, ob)
-                    oi_list.append(l)
-                    p_ang2 = cent_ang - math.pi/2
-                    l = self.save_limit(x, goal, p_ang2, ob)
-                    oi_list.append(l)
-                # In between:
-                #   => We use ang_ini & ang_fin as points
-                else:
-                    print "Ang in between. ang_ini: " + str(ang_ini) + " & ang_fin: " + str(ang_fin)
-                    l = self.save_limit(x, goal, ang_ini, ob)
-                    oi_list.append(l)
-                    l = self.save_limit(x, goal, ang_fin, ob)
-                    oi_list.append(l)
+        for l in limit:
+            if (l.col == False):
+                oi_list.append(l)
 
         self.graph_limits(limit, oi_list)
         return oi_list
-
-    # We save a limit from it's angle
-    def save_limit(self, x, goal, ang, ob):
-        dst_x = math.cos(ang) * self.sensor_radius + x[0]
-        dst_y = math.sin(ang) * self.sensor_radius + x[1]
-        intersects, p = self.lidar_limits(x, np.array([dst_x, dst_y]), ob)
-        l = LidarPoint()
-        l.col = intersects
-        l.angle = ang
-        l.r[0] = p[0]
-        l.r[1] = p[1]
-        path1 = math.sqrt((x[0] - l.r[0])**2 + (x[1] - l.r[1])**2)
-        path2 = math.sqrt((l.r[0] - goal[0])**2 + (l.r[1] - goal[1])**2)
-        l.dist = path1 + path2
-        return l
 
     def print_oi_list(self, oi_list):
         i = 1
@@ -239,14 +186,28 @@ class atan1Agent():
 
         print "----------------------"
 
-    def get_min_oi(self, oi_list):
+    def get_min_oi(self, oi_list, x, goal):
+        selected_dfollowed = self.get_dfollowed(x, oi_list[0].r, goal)
         selected = oi_list[0]
 
         for oi in oi_list:
-            if (oi.dist < selected.dist and oi.col == False):
+            dfollowed = self.get_dfollowed(x, oi.r, goal)
+            if (selected_dfollowed > dfollowed):
                 selected = oi
+                selected_dfollowed = dfollowed
 
         return selected
+
+    def get_dfollowed(self, x, r, goal):
+        dx = r[0] - x[0]
+        dy = r[1] - x[1]
+        dist_xr = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
+        dx = goal[0] - r[0]
+        dy = goal[1] - r[1]
+        dist_rgoal = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
+        oi_followed = dist_xr + dist_rgoal
+
+        return oi_followed
 
     def tangentbug_control(self, x, ob, goal, limit):
         # Modeled using description at:
@@ -254,22 +215,17 @@ class atan1Agent():
         # And with some graphical aid from:
         #         https://www.cs.cmu.edu/~motionplanning/student_gallery/2006/st/hw2pub.htm
         oi_list = self.get_limits(x, goal, limit, ob)
-        self.print_oi_list(oi_list)
+        #self.print_oi_list(oi_list)
 
         if (len(oi_list) == 0):
-            # No collission in sight, we can move directly to target
-            ang = math.atan2(goal[1]-x[1],goal[0]-x[0])
-            print "Moving directly to target ---------"
-            print "Angle: " + str(ang)
-        elif (len(oi_list) >= 1):
-            # Collission in sight, need to decide best strategy
-            oi_dfollowed = self.get_min_oi(oi_list)
+            print "Can not find best path... Random move!"
+            ang = random.random() * 2 * math.pi
+        else:
+            # We need to get best path
+            oi_dfollowed = self.get_min_oi(oi_list, x, goal)
             print "Oi to follow --------------"
             oi_dfollowed.print_values()
             ang = oi_dfollowed.angle
-        else:
-            print "Can not find best path... Random move!"
-            ang = random.random() * 2 * math.pi
 
         vel = self.step
         ticks = 1
