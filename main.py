@@ -140,7 +140,10 @@ def main():
             break
 
     path = "/home/ignacio/Downloads/PyPlot/"
-    cmd = "convert -delay 0.5 " + path + "anim_*.png -loop 0 -monitor " + path + "movie.gif"
+    # Didn't work
+    #cmd = "convert -delay 0.5 " + path + "anim_*.png -loop 0 -monitor " + path + "movie.gif"
+    # Works, but not within Python
+    cmd = 'ffmpeg -framerate 25 -pattern_type glob -i "anim_*.png" output.mkv'
     #status = subprocess.call(cmd, shell=True)
     print "First run:"
     print "    " + cmd

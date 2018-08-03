@@ -35,7 +35,7 @@ class atan1Agent():
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
         self.sensor_radius = 10  # [m]
-        self.sensor_angle_steps = 36  # [rad]
+        self.sensor_angle_steps = 12  # [rad]
         self.lidar_object_limit = 4
         self.imagefile = 1
 
