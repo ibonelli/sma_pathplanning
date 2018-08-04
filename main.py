@@ -43,7 +43,7 @@ def main():
     # initial state [x, y, yaw(rad), v(m/s), omega(rad/s)]
     #x = np.array([10, 10, math.pi / 8.0, 0.0, 0.0])
     # TangentBug ------------
-    x = np.array([10, 10])
+    x = np.array([5, 5])
     # DWA & TangentBug ------
     # goal position [x, y]
     goal = np.array([50, 50])
@@ -53,13 +53,13 @@ def main():
 
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world04.csv")
+    ob = np.loadtxt("world01.csv")
 
     atan1 = atan1Agent()
     r1 = rAgent()
     r2 = rAgent()
 
-    for i in range(10):
+    for i in range(100):
         # Random1 - Calculating trajectory
         if (r1_ticks == 0):
             r1_ang, r1_vel, r1_ticks = r1.random_control()
@@ -92,7 +92,6 @@ def main():
         #u, ltraj = dwa.dwa_control(x, u, goal, ob4dwa)
         #x = dwa.motion(x, u)
         #print "Pos " + str(i) + " - x: " + str(x)
-        #traj = np.vstack((traj, x))  # store state history
 
         # TangentBug
         ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
@@ -103,6 +102,9 @@ def main():
         x,col = atan1.motion(x, ob, ang, vel)
         print "======================================================================="
         print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
+
+        # DWA & tangentBug
+        traj = np.vstack((traj, x))  # store state history
 
         if show_animation:
             plt.cla()
@@ -157,6 +159,7 @@ def main():
         # Random2
         plt.plot(r2_traj[:, 0], r2_traj[:, 1], "-b")
         # DWA/TangentBug
+        #print(traj)
         plt.plot(traj[:, 0], traj[:, 1], "-g")
         # We save to a file
         plt.savefig("/home/ignacio/Downloads/PyPlot/movie_end.png")

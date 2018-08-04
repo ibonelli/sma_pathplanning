@@ -35,7 +35,7 @@ class atan1Agent():
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
         self.sensor_radius = 10  # [m]
-        self.sensor_angle_steps = 12  # [rad]
+        self.sensor_angle_steps = 36  # [rad]
         self.lidar_object_limit = 4
         self.imagefile = 1
 
@@ -99,7 +99,6 @@ class atan1Agent():
             return intersects, None
 
     # We get the limit for an specific angle.
-    # Almost the same as the obstacle_detection()
     def lidar_limits(self, x, r, ob):
         oi = []
         for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
@@ -112,7 +111,7 @@ class atan1Agent():
         elif (len(oi) == 1):
             return True, oi[0]
         else:
-            min_val = 99999999 # Try float("inf")
+            min_val = float("inf")
             val_to_return = None
             for p in oi:
                 h = np.linalg.norm(p)
@@ -121,39 +120,6 @@ class atan1Agent():
                     val_to_return = p
             return True, p
 
-    # Obstacle detection for the robot
-    # Same algorithm used by random movement agent
-    def obstacle_detection(self, x, r, ang, ob):
-        step = 2 * self.robot_radius * 0.99
-        collision = False
-
-        dx = x[0] - r[0]
-        dy = x[1] - r[1]
-        distance = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-
-        steps_to_do = int(math.ceil(distance/step))
-        step = distance / steps_to_do
-        stepx = math.cos(ang) * step
-        stepy = math.sin(ang) * step
-
-        for i in xrange(steps_to_do):
-            for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
-                # print '(' + str(obx) + ',' + str(oby) + ',' + str(obs) + ')'
-                xloc = x[0] + stepx * i
-                yloc = x[1] + stepy * i
-                dx = xloc - obx
-                dy = yloc - oby
-                dist = math.sqrt(math.pow(dx,2)+math.pow(dy,2))
-                if (dist < (obs+self.robot_radius)):
-                    collision = True
-                    rx = x[0] + stepx * (i-1)
-                    ry = x[1] + stepy * (i-1)
-                    r = np.array([rx, ry])
-                    print "Collision: obx [" + str(obx) + "," + str(oby) + "] | ang: " + str(ang)
-                    return r,collision
-
-        return r,collision
-
     def motion(self, x, ob, ang, vel):
         x_dir = math.cos(ang)
         y_dir = math.sin(ang)
@@ -161,7 +127,7 @@ class atan1Agent():
         ry = x[1] + y_dir * vel
         r = np.array([rx, ry])
 
-        r,col = self.obstacle_detection(x, r, ang, ob)
+        col,r = self.lidar_limits(x, r, ob)
 
         return r,col
 
