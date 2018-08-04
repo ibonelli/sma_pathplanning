@@ -30,3 +30,8 @@ v0.10
     Run DWA in different worlds, and created a new world to test it a bit further
 v0.11
     Added two agents into the same world: Random & DWA
+v0.12
+    Fixed tangentBug. Now mostly working.
+    tangentBug collission algorithm: Still need to add size of robot, it goes closer to the objects than it should. 
+    There seems to be some problem with the old collission algorithm used by the random agent. Consider replacing with tangentBug one.
+    Now I can run either DWA or tangentBug with the same main.py file.

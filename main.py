@@ -14,15 +14,15 @@ import matplotlib.pyplot as plt
 import subprocess
 
 # Modules
-# DWA
 from agent_dwa import dwaAgent
-# TangentBug
-#from agent_tangent_bug import atan1Agent
+from agent_tangent_bug import atan1Agent
 from agent_random import rAgent
 
 # Globals
 show_animation = True
 file_number = 1
+#goal_agent = "DWA"
+goal_agent = "tangentBug"
 
 def main():
     global file_number
@@ -42,12 +42,12 @@ def main():
     r2_traj = np.array(r2_x)
     r2_ticks = 0
 
-    # DWA -------------------
     # initial state [x, y, yaw(rad), v(m/s), omega(rad/s)]
-    x = np.array([10, 10, math.pi / 8.0, 0.0, 0.0])
-    # TangentBug ------------
-    #x = np.array([10, 10])
-    # DWA & TangentBug ------
+    if (goal_agent == "DWA"):
+        x = np.array([5, 5, math.pi / 8.0, 0.0, 0.0])
+    if (goal_agent == "tangentBug"):
+        x = np.array([5, 5])
+
     # goal position [x, y]
     goal = np.array([50, 50])
     # Saving trajectory
@@ -56,26 +56,26 @@ def main():
 
     # obstacles [ob1(x,y,r), ob2(x,y,r), ....]
     # x,y coord and obstacle radius
-    ob = np.loadtxt("world04.csv")
+    ob = np.loadtxt("world05.csv")
 
-    # TangentBug
-    #atan1 = atan1Agent()
-    # DWA
-    dwa = dwaAgent()
     r1 = rAgent()
     r2 = rAgent()
+    if (goal_agent == "DWA"):
+        dwa = dwaAgent()
+    if (goal_agent == "tangentBug"):
+        atan1 = atan1Agent()
 
-    for i in range(1000):
+    for i in range(100):
         # Random1 - Calculating trajectory
         if (r1_ticks == 0):
             r1_ang, r1_vel, r1_ticks = r1.random_control()
         else:
             r1_ticks-=1
         # Random1 - Calculating movement
-        # TangentBug
-        #ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-        # DWA
-        ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
+        if (goal_agent == "tangentBug"):
+            ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
+        if (goal_agent == "DWA"):
+            ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
         ob4r1 = np.vstack((ob,ob2add))
         r1_x, r1_col = r1.motion(r1_x, ob4r1, r1_ang, r1_vel)
         if (r1_col):
@@ -88,33 +88,34 @@ def main():
         else:
             r2_ticks-=1
         # Random2 - Calculating movement
-        # TangentBug
-        #ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
-        # DWA
-        ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
+        if (goal_agent == "tangentBug"):
+            ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
+        if (goal_agent == "DWA"):
+            ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
         ob4r2 = np.vstack((ob,ob2add))
         r2_x, r2_col = r2.motion(r2_x, ob4r2, r2_ang, r2_vel)
         if (r2_col):
             r2_ticks = 0
         r2_traj = np.vstack((r2_traj, r2_x))  # store state history
 
-        # DWA
-        ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-        ob4dwa = np.vstack((ob,ob2add))
-        u, ltraj = dwa.dwa_control(x, u, goal, ob4dwa)
-        x = dwa.motion(x, u)
-        print "Pos " + str(i) + " - x: " + str(x)
-        traj = np.vstack((traj, x))  # store state history
+        # Goal agent
+        if (goal_agent == "DWA"):
+            ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
+            ob4dwa = np.vstack((ob,ob2add))
+            u, ltraj = dwa.dwa_control(x, u, goal, ob4dwa)
+            x = dwa.motion(x, u)
+            print "Pos " + str(i) + " - x: " + str(x)
+        if (goal_agent == "tangentBug"):
+            ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
+            ob4tb = np.vstack((ob,ob2add))
+            limit = atan1.lidar(x, ob4tb)
+            #graph_lidar(x, goal, limit, ob, i)
+            ang, vel, ticks = atan1.tangentbug_control(x, ob4tb, goal, limit)
+            x,col = atan1.motion(x, ob, ang, vel)
+            print "======================================================================="
+            print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
 
-        # TangentBug
-        #ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-        #ob4tb = np.vstack((ob,ob2add))
-        #limit = atan1.lidar(x, ob4tb)
-        ##graph_lidar(x, goal, limit, ob, i)
-        #ang, vel, ticks = atan1.tangentbug_control(x, ob4tb, goal, limit)
-        #x,col = atan1.motion(x, ob, ang, vel)
-        #print "======================================================================="
-        #print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
+        traj = np.vstack((traj, x))  # store state history
 
         if show_animation:
             plt.cla()
@@ -122,10 +123,10 @@ def main():
             plt.plot(r1_x[0], r1_x[1], "xr")
             # Random1
             plt.plot(r2_x[0], r2_x[1], "xb")
-            # DWA
-            plt.plot(ltraj[:, 0], ltraj[:, 1], "-g")
-            dwa.plot_arrow(x[0], x[1], x[2])
-            # DWA & TangentBug ------
+            # DWA & TangentBug
+            if (goal_agent == "DWA"):
+                plt.plot(ltraj[:, 0], ltraj[:, 1], "-g")
+                dwa.plot_arrow(x[0], x[1], x[2])
             plt.plot(x[0], x[1], "xg")
             plt.plot(goal[0], goal[1], "ob")
             # ob[:, 0] -> The full first row of the array (all X numbers)
@@ -145,10 +146,11 @@ def main():
             plt.pause(0.0001)
 
         # check goal
-        # DWA
-        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= dwa.robot_radius:
-        # TangentBug
-        #if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= atan1.robot_radius:
+        if (goal_agent == "DWA"):
+            check_radius = dwa.robot_radius
+        if (goal_agent == "tangentBug"):
+            check_radius = atan1.robot_radius
+        if math.sqrt((x[0] - goal[0])**2 + (x[1] - goal[1])**2) <= check_radius:
             print("Goal!!")
             break
 
