@@ -35,3 +35,9 @@ v0.12
     tangentBug collission algorithm: Still need to add size of robot, it goes closer to the objects than it should. 
     There seems to be some problem with the old collission algorithm used by the random agent. Consider replacing with tangentBug one.
     Now I can run either DWA or tangentBug with the same main.py file.
+
+---------
+
+Para mejorar el tangentBug implementé:
+	* El calculo de dfollow para todos los puntos sin colision
+	* Reduje la cantidad de los angulos a 12 u 8 (como tiene APF)
