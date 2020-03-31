@@ -2,6 +2,12 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+# ------------------------
+# STILL NEEDS LOTS OF WORK
+#     Folloging different approach on new repo
+#     This agent does not work in a continous environment
+# ------------------------
+
 class apfAgent():
     # simulation parameters
 
