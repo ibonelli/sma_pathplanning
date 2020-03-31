@@ -16,31 +16,17 @@ import subprocess
 # Modules
 from agent_dwa import dwaAgent
 from agent_tangent_bug import atan1Agent
-from agent_random import rAgent
 
 # Globals
 show_animation = True
 file_number = 1
-#goal_agent = "DWA"
-goal_agent = "tangentBug"
+goal_agent = "DWA"
+#goal_agent = "tangentBug"
+file_path = "/home/ignacio/Maestria/sma_pathplanning/output/"
 
 def main():
     global file_number
     print(__file__ + " start!!")
-
-    # Random1 --------
-    # initial state [x, y]
-    r1_x = np.array([40, 20])
-    # Saving trajectory
-    r1_traj = np.array(r1_x)
-    r1_ticks = 0
-
-    # Random2 --------
-    # initial state [x, y]
-    r2_x = np.array([20, 40])
-    # Saving trajectory
-    r2_traj = np.array(r2_x)
-    r2_ticks = 0
 
     # initial state [x, y, yaw(rad), v(m/s), omega(rad/s)]
     if (goal_agent == "DWA"):
@@ -58,59 +44,21 @@ def main():
     # x,y coord and obstacle radius
     ob = np.loadtxt("world05.csv")
 
-    r1 = rAgent()
-    r2 = rAgent()
     if (goal_agent == "DWA"):
         dwa = dwaAgent()
     if (goal_agent == "tangentBug"):
         atan1 = atan1Agent()
 
-    for i in range(100):
-        # Random1 - Calculating trajectory
-        if (r1_ticks == 0):
-            r1_ang, r1_vel, r1_ticks = r1.random_control()
-        else:
-            r1_ticks-=1
-        # Random1 - Calculating movement
-        if (goal_agent == "tangentBug"):
-            ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-        if (goal_agent == "DWA"):
-            ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-        ob4r1 = np.vstack((ob,ob2add))
-        r1_x, r1_col = r1.motion(r1_x, ob4r1, r1_ang, r1_vel)
-        if (r1_col):
-            r1_ticks = 0
-        r1_traj = np.vstack((r1_traj, r1_x))  # store state history
-
-        # Random2 - Calculating trajectory
-        if (r2_ticks == 0):
-            r2_ang, r2_vel, r2_ticks = r2.random_control()
-        else:
-            r2_ticks-=1
-        # Random2 - Calculating movement
-        if (goal_agent == "tangentBug"):
-            ob2add = np.array([[x[0], x[1], atan1.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
-        if (goal_agent == "DWA"):
-            ob2add = np.array([[x[0], x[1], dwa.robot_radius], [r1_x[0], r1_x[1], r1.robot_radius]])
-        ob4r2 = np.vstack((ob,ob2add))
-        r2_x, r2_col = r2.motion(r2_x, ob4r2, r2_ang, r2_vel)
-        if (r2_col):
-            r2_ticks = 0
-        r2_traj = np.vstack((r2_traj, r2_x))  # store state history
-
+    for i in range(1000):
         # Goal agent
         if (goal_agent == "DWA"):
-            ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-            ob4dwa = np.vstack((ob,ob2add))
-            u, ltraj = dwa.dwa_control(x, u, goal, ob4dwa)
+            u, ltraj = dwa.dwa_control(x, u, goal, ob)
             x = dwa.motion(x, u)
             print "Pos " + str(i) + " - x: " + str(x)
         if (goal_agent == "tangentBug"):
-            ob2add = np.array([[r1_x[0], r1_x[1], r1.robot_radius], [r2_x[0], r2_x[1], r2.robot_radius]])
-            ob4tb = np.vstack((ob,ob2add))
-            limit = atan1.lidar(x, ob4tb)
+            limit = atan1.lidar(x, ob)
             #graph_lidar(x, goal, limit, ob, i)
-            ang, vel, ticks = atan1.tangentbug_control(x, ob4tb, goal, limit)
+            ang, vel, ticks = atan1.tangentbug_control(x, ob, goal, limit)
             x,col = atan1.motion(x, ob, ang, vel)
             print "======================================================================="
             print "Step " + str(i) + " | pos: " + str(x) + " | ang: " + str(ang) + " | col: " + str(col)
@@ -119,10 +67,6 @@ def main():
 
         if show_animation:
             plt.cla()
-            # Random1
-            plt.plot(r1_x[0], r1_x[1], "xr")
-            # Random1
-            plt.plot(r2_x[0], r2_x[1], "xb")
             # DWA & TangentBug
             if (goal_agent == "DWA"):
                 plt.plot(ltraj[:, 0], ltraj[:, 1], "-g")
@@ -141,9 +85,9 @@ def main():
             # We save to a file
             imagefile = format(file_number, '05d')
             file_number += 1
-            plt.savefig("/home/ignacio/Downloads/PyPlot/anim_" + imagefile + ".png")
+            plt.savefig(file_path + "/anim_" + imagefile + ".png")
             # And show as we used to
-            plt.pause(0.0001)
+            #plt.pause(0.0001)
 
         # check goal
         if (goal_agent == "DWA"):
@@ -154,7 +98,6 @@ def main():
             print("Goal!!")
             break
 
-    path = "/home/ignacio/Downloads/PyPlot/"
     # Didn't work
     #cmd = "convert -delay 0.5 " + path + "anim_*.png -loop 0 -monitor " + path + "movie.gif"
     # Works, but not within Python
@@ -163,18 +106,14 @@ def main():
     print "First run:"
     print "    " + cmd
     print "And then run:"
-    print "    " + "rm " + path + "anim_*.png"
+    print "    " + "rm " + file_path + "anim_*.png"
 
     print("Done")
     if show_animation:
-        # Random1
-        plt.plot(r1_traj[:, 0], r1_traj[:, 1], "-r")
-        # Random2
-        plt.plot(r2_traj[:, 0], r2_traj[:, 1], "-b")
         # DWA & TangentBug
         plt.plot(traj[:, 0], traj[:, 1], "-g")
         # We save to a file
-        plt.savefig("/home/ignacio/Downloads/PyPlot/movie_end.png")
+        plt.savefig(file_path + "/movie_end.png")
         # And show as we used to
         plt.show()
 
