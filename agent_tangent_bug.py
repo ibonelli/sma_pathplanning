@@ -83,8 +83,15 @@ class atan1Agent():
                 i.append(i2)
             return True, i
 
+    # We get the limit for an specific angle.
+    # Where:
+    #       p1: Is the first point of a segment
+    #       p2: Is the second point of a sagment
+    #        q: Is the center of a circle that could intersect with the segment
+    #        r: Is the radius of the circle that could intersect the segment
     def detect_collision_point(self, p1, p2, q, r):
         intersects, values = self.getSegmentCircleIntersection(p1,p2,q,r)
+        # This code returns the proper intersection point
         if (intersects):
             if (len(values) == 1):
                 return intersects, values[0]
@@ -98,11 +105,28 @@ class atan1Agent():
         else:
             return intersects, None
 
+    # We get the object closest to the LIDAR looking angle.
+    # Where:
+    #       p1: Is the first point of a segment
+    #       p2: Is the second point of a sagment
+    #        q: Is the center of a circle that could intersect with the segment
+    #        r: Is the radius of the circle that could intersect the segment
+    def detect_collision_object(self, p1, p2, q, r):
+        intersects, values = self.getSegmentCircleIntersection(p1,p2,q,r)
+        if (intersects):
+            return intersects, q
+        else:
+            return intersects, None
+
     # We get the limit for an specific angle.
+    # Where:
+    #        x: Is the position where LIDAR is measuring
+    #        r: Is the current limit LIDAR position being explored for object collision
+    #       ob: Is the x,y position of each object along with its radius (obs)
     def lidar_limits(self, x, r, ob):
         oi = []
         for obx,oby,obs in np.nditer([ob[:, 0], ob[:, 1], ob[:, 2]]):
-            intersects, limit = self.detect_collision_point(x, r, np.array([obx, oby]), obs)
+            intersects, limit = self.detect_collision_object(x, r, np.array([obx, oby]), obs)
             if (intersects):
                 #print "Intersection at " + str(limit)
                 oi.append(limit)
